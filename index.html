@@ -112,6 +112,7 @@
   .toolbar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 0 0 14px; }
   .tbtn { font: inherit; font-size: 13px; color: var(--paper); background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 99px; padding: 5px 13px; cursor: pointer; }
   .tbtn[aria-pressed="true"] { border-color: var(--candle); color: var(--candle); }
+  .tbtn:disabled { opacity: .55; cursor: default; border-style: dashed; }
   .tbtn:focus-visible { outline: 3px solid rgba(255,207,122,.7); outline-offset: 2px; }
   a.btn { display: inline-block; text-decoration: none; line-height: 1.3; }
   .aitag[hidden] { display: none; }
@@ -342,8 +343,8 @@
   <main id="booth">
     <div class="toolbar" role="group" aria-label="설정">
       <button class="tbtn" id="tSound" type="button" aria-pressed="true">🔊 효과음 켬</button>
-      <button class="tbtn" id="tVoice" type="button" aria-pressed="false" hidden>🔈 독설 목소리 끔</button>
-      <button class="tbtn" id="tAI" type="button" aria-pressed="true" hidden>🤖 맞춤 판결 켬</button>
+      <button class="tbtn" id="tVoice" type="button" aria-pressed="false" disabled>🔈 독설 목소리 끔</button>
+      <button class="tbtn" id="tAI" type="button" aria-pressed="true" disabled>🤖 맞춤 판결 켬</button>
     </div>
     <div class="booth">
       <div class="lattice">
@@ -921,14 +922,20 @@
     var sb = $('tSound'), vb = $('tVoice'), ab = $('tAI');
     sb.setAttribute('aria-pressed', String(prefs.sound));
     sb.textContent = prefs.sound ? '🔊 효과음 켬' : '🔇 효과음 끔';
-    vb.hidden = !ttsApi;
-    vb.setAttribute('aria-pressed', String(prefs.voice));
-    vb.textContent = prefs.voice ? '🗣️ 독설 목소리 켬' : '🔈 독설 목소리 끔';
-    ab.hidden = !sampleFn;
-    ab.setAttribute('aria-pressed', String(prefs.ai));
-    ab.textContent = prefs.ai ? '🤖 맞춤 판결 켬' : '🤖 맞춤 판결 끔';
+    vb.hidden = false; ab.hidden = false;
+    vb.disabled = !ttsApi; ab.disabled = !sampleFn;
+    vb.setAttribute('aria-pressed', String(!!ttsApi && prefs.voice));
+    ab.setAttribute('aria-pressed', String(!!sampleFn && prefs.ai));
+    if (!capsReady) { vb.textContent = '🔈 독설 목소리 확인 중…'; ab.textContent = '🤖 맞춤 판결 확인 중…'; }
+    else {
+      vb.textContent = !ttsApi ? '🔈 독설 목소리 (이 화면에선 안 됨)' : prefs.voice ? '🗣️ 독설 목소리 켬' : '🔈 독설 목소리 끔';
+      ab.textContent = !sampleFn ? '🤖 맞춤 판결 (이 화면에선 안 됨)' : prefs.ai ? '🤖 맞춤 판결 켬' : '🤖 맞춤 판결 끔';
+    }
+    vb.title = !ttsApi && capsReady ? '이 브라우저·앱에서는 음성 기능을 쓸 수 없다 (Safari나 모바일 앱에서는 안 된다)' : '';
+    ab.title = !sampleFn && capsReady ? '이 화면에서는 Claude 맞춤 판결을 쓸 수 없다. 기본 판결로 나온다' : '';
   }
 
+  var capsReady = false;
   async function initCaps() {
     try {
       if (window.claude && window.claude.use) {
@@ -950,6 +957,7 @@
         });
       } catch (e) {}
     }
+    capsReady = true;
     applyPrefs();
   }
 
