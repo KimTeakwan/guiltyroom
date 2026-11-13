@@ -359,6 +359,7 @@
   <main id="booth">
     <div class="toolbar" role="group" aria-label="설정">
       <button class="tbtn" id="tSound" type="button" aria-pressed="true">🔊 효과음 켬</button>
+      <button class="tbtn" id="tBgm" type="button" aria-pressed="false">🔔 성당 BGM 끔</button>
       <button class="tbtn" id="tVoice" type="button" aria-pressed="false" disabled>🔈 독설 목소리 끔</button>
       <button class="tbtn" id="tAI" type="button" aria-pressed="true" disabled>🤖 맞춤 판결 켬</button>
     </div>
@@ -899,7 +900,7 @@
 
   /* ===== 설정, 효과음, 목소리, 맞춤 판결, 표정, 칭호 ===== */
   var prefs = (function () {
-    var d = { sound: true, voice: false, ai: true };
+    var d = { sound: true, voice: false, ai: true, bgm: false };
     try { var st = JSON.parse(localStorage.getItem('confession-prefs') || '{}'); for (var k in d) { if (typeof st[k] === 'boolean') d[k] = st[k]; } } catch (e) {}
     return d;
   })();
@@ -977,10 +978,88 @@
     };
   })();
 
+
+  /* ---------- 성당 BGM (직접 합성한 오르간·종소리, 외부 음원 없음) ---------- */
+  var bgm = (function () {
+    var ctx = null, master = null, bus = null, on = false, timer = null, step = 0, ducked = false;
+    var CHORDS = [
+      [38, 45, 50, 53, 57], [34, 41, 46, 50, 53], [43, 50, 55, 58, 62], [33, 45, 52, 57, 61],
+      [38, 45, 50, 53, 57], [41, 48, 53, 57, 60], [36, 48, 55, 60, 64], [38, 45, 50, 57, 62]
+    ];
+    var CH_SEC = 8;
+    function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+    function impulse(c, sec) {
+      var n = Math.floor(c.sampleRate * sec), b = c.createBuffer(2, n, c.sampleRate);
+      for (var ch = 0; ch < 2; ch++) { var d = b.getChannelData(ch); for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6); }
+      return b;
+    }
+    function build() {
+      var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+      var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100; lp.Q.value = 0.4;
+      var dry = ctx.createGain(); dry.gain.value = 0.55;
+      var conv = ctx.createConvolver(); conv.buffer = impulse(ctx, 4.2);
+      var wet = ctx.createGain(); wet.gain.value = 0.85;
+      bus = ctx.createGain(); bus.gain.value = 1;
+      bus.connect(lp); lp.connect(dry); lp.connect(conv); conv.connect(wet); dry.connect(master); wet.connect(master);
+      return true;
+    }
+    function voice(freq, t0, dur, gain) {
+      [[1, 'sawtooth', 0.55, -5], [1, 'sawtooth', 0.55, 6], [2, 'sine', 0.5, 0], [0.5, 'sine', 0.35, 0]].forEach(function (r) {
+        var o = ctx.createOscillator(); o.type = r[1]; o.frequency.value = freq * r[0]; o.detune.value = r[3];
+        var g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.linearRampToValueAtTime(gain * r[2], t0 + 2.6);
+        g.gain.setValueAtTime(gain * r[2], t0 + dur - 0.5);
+        g.gain.linearRampToValueAtTime(0.0001, t0 + dur + 3);
+        o.connect(g); g.connect(bus); o.start(t0); o.stop(t0 + dur + 3.2);
+      });
+    }
+    function bell(t0, f) {
+      [[1, 0.5, 7], [2.0, 0.28, 5], [2.76, 0.22, 4], [5.4, 0.1, 2.5], [8.93, 0.05, 1.5]].forEach(function (p) {
+        var o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f * p[0];
+        var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(p[1] * 0.35, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + p[2]);
+        o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + p[2] + 0.1);
+      });
+    }
+    function next() {
+      if (!on || !ctx) return;
+      var t = ctx.currentTime + 0.05, ch = CHORDS[step % CHORDS.length];
+      ch.forEach(function (m, i) { voice(hz(m), t, CH_SEC, 0.075 - i * 0.008); });
+      if (step % 2 === 0) bell(t + 0.3, 146.83);
+      step++;
+      timer = setTimeout(next, CH_SEC * 1000 - 400);
+    }
+    function level() { return ducked ? 0.1 : 0.32; }
+    return {
+      start: function () {
+        try {
+          if (!ctx && !build()) return false;
+          if (ctx.state === 'suspended') ctx.resume().catch(function () {});
+          if (on) return true;
+          on = true; master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setTargetAtTime(level(), ctx.currentTime, 1.5);
+          clearTimeout(timer); next(); return true;
+        } catch (e) { return false; }
+      },
+      stop: function () {
+        try {
+          on = false; clearTimeout(timer);
+          if (ctx) { master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setTargetAtTime(0, ctx.currentTime, 0.4); var c = ctx; setTimeout(function () { if (!on && c.state === 'running') c.suspend().catch(function () {}); }, 2500); }
+        } catch (e) {}
+      },
+      duck: function (d) { ducked = d; try { if (on && ctx) master.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); } catch (e) {} },
+      pause: function () { try { if (on && ctx) ctx.suspend().catch(function () {}); } catch (e) {} },
+      resume: function () { try { if (on && ctx) ctx.resume().catch(function () {}); } catch (e) {} },
+      isOn: function () { return on; }
+    };
+  })();
+
   function applyPrefs() {
     var sb = $('tSound'), vb = $('tVoice'), ab = $('tAI');
     sb.setAttribute('aria-pressed', String(prefs.sound));
     sb.textContent = prefs.sound ? '🔊 효과음 켬' : '🔇 효과음 끔';
+    var bb = $('tBgm'); bb.setAttribute('aria-pressed', String(prefs.bgm)); bb.textContent = prefs.bgm ? '🔔 성당 BGM 켬' : '🔔 성당 BGM 끔';
     vb.hidden = false; ab.hidden = false;
     vb.disabled = !ttsApi; ab.disabled = !sampleFn;
     vb.setAttribute('aria-pressed', String(!!ttsApi && prefs.voice));
@@ -1011,8 +1090,8 @@
         ttsApi.onState(function (st) {
           var f = document.querySelector('svg.father');
           if (!f || !st) return;
-          if (st.state === 'speaking') { ttsSpeaking = true; clearTimeout(talkTimer); f.classList.add('talking'); }
-          else if (st.state === 'idle') { ttsSpeaking = false; f.classList.remove('talking'); }
+          if (st.state === 'speaking') { bgm.duck(true); ttsSpeaking = true; clearTimeout(talkTimer); f.classList.add('talking'); }
+          else if (st.state === 'idle') { bgm.duck(false); ttsSpeaking = false; f.classList.remove('talking'); }
         });
       } catch (e) {}
     }
@@ -1237,6 +1316,11 @@
     });
     if (started) btn.disabled = true;
   });
+  $('tBgm').addEventListener('click', function () {
+    prefs.bgm = !prefs.bgm; savePrefs(); applyPrefs();
+    if (prefs.bgm) { if (!bgm.start()) { prefs.bgm = false; savePrefs(); applyPrefs(); toast('이 기기에서는 BGM을 못 튼다'); } } else bgm.stop();
+  });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) bgm.pause(); else bgm.resume(); });
   $('tSound').addEventListener('click', function () { prefs.sound = !prefs.sound; savePrefs(); applyPrefs(); if (prefs.sound) sfx.tick(); });
   $('tVoice').addEventListener('click', function () {
     prefs.voice = !prefs.voice; savePrefs(); applyPrefs();
@@ -1371,7 +1455,7 @@
   renderTitle();
   applyPrefs();
   initCaps();
-  document.addEventListener('pointerdown', function () { sfx.unlock(); }, { once: true });
+  document.addEventListener('pointerdown', function () { sfx.unlock(); if (prefs.bgm) bgm.start(); }, { once: true });
   say('왔냐 시발. 앉아라. 오늘은 또 무슨 개짓을 했냐.');
   setInterval(function () {
     if (document.hidden || busy) return;
