@@ -207,7 +207,7 @@
   .log-item .row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--muted); }
   .log-item p { margin: 4px 0 0; font-size: 14.5px; word-break: break-word; }
   .log-item .pen { color: var(--candle); font-size: 13.5px; }
-  .linkbtn { background: none; border: 0; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer; text-decoration: underline; padding: 0; }
+  .linkbtn { min-height: 36px; padding: 8px 6px !important; background: none; border: 0; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer; text-decoration: underline; padding: 0; }
 
   footer { text-align: center; margin-top: 44px; color: #7d6d58; font-size: 12.5px; }
   .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--paper); color: var(--ink); padding: 8px 16px; border-radius: 99px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; }
@@ -275,6 +275,22 @@
   #rk .pill.lv { background: var(--wine); color: #fff; }
   #rk .banner { color: var(--paper); }
   #toRank:disabled { opacity: .55; cursor: default; }
+  .guide { margin: 28px 0 0; border: 1px solid var(--line); border-radius: 14px; background: rgba(0,0,0,.22); }
+  .guide > summary { cursor: pointer; padding: 14px 16px; font-size: 15.5px; font-weight: 600; color: var(--candle); list-style: none; }
+  .guide > summary::-webkit-details-marker { display: none; }
+  .guide > summary::after { content: '＋'; float: right; color: var(--muted); }
+  .guide[open] > summary::after { content: '－'; }
+  .guide .gbody { padding: 0 16px 16px; font-size: 14.5px; }
+  .guide h4 { margin: 18px 0 6px; font-size: 15px; color: var(--paper); }
+  .guide ol { margin: 0; padding-left: 22px; }
+  .guide li { margin: 4px 0; }
+  .guide .gnote { margin: 12px 0 0; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; }
+  .guide details.os { border-top: 1px solid var(--line); padding: 4px 0; }
+  .guide details.os > summary { cursor: pointer; padding: 8px 0; font-size: 14.5px; color: var(--paper); }
+  .guide .gurl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  .guide .gurl code { flex: 1; min-width: 0; overflow-wrap: anywhere; background: rgba(0,0,0,.35); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--paper); }
+  .guide .gurl .btn { padding: 8px 14px; font-size: 14px; }
+  .guide .tag { font-size: 11.5px; background: var(--candle); color: var(--ink); border-radius: 99px; padding: 1px 8px; margin-left: 6px; font-weight: 700; }
   #fb .fbpanel { background: linear-gradient(180deg, var(--wood-hi), var(--wood)); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: 0 16px 44px rgba(0,0,0,.5); margin-bottom: 16px; }
   #fb .fbintro { margin: 0 0 14px; color: var(--paper); }
   #fb textarea { min-height: 130px; }
@@ -506,6 +522,49 @@
     <section class="fbpanel" id="fbMineBox" hidden><h3>내가 보낸 문의</h3><div id="fbMine"></div></section>
     <section class="fbpanel" id="fbInboxBox" hidden><h3>📥 받은 문의 <span id="fbInboxCount"></span></h3><div id="fbInbox"></div></section>
   </div>
+
+  <details class="guide" id="guide">
+    <summary>📲 바로 들어오는 법 · 친구에게 공유하는 법</summary>
+    <div class="gbody">
+      <h4>🔗 주소 검색 없이 바로 들어오기 (홈 화면에 추가)</h4>
+      <p style="margin:0 0 8px">홈 화면에 바로가기를 만들어 두면 앱 아이콘처럼 눌러서 바로 들어온다. 쓰는 기기에 맞는 방법을 펼쳐라.</p>
+      <details class="os" id="osIos">
+        <summary>🍎 아이폰·아이패드 (Safari) <span class="tag" hidden>내 기기</span></summary>
+        <ol>
+          <li>Safari로 이 사이트를 연다. (Claude 앱 안이 아니라 Safari여야 한다.)</li>
+          <li>화면 아래 가운데의 <b>공유 버튼(네모에 위쪽 화살표)</b>을 누른다.</li>
+          <li>목록을 위로 밀어서 <b>"홈 화면에 추가"</b>를 누른다.</li>
+          <li>이름을 "고해실"로 두고 오른쪽 위 <b>"추가"</b>를 누르면 홈 화면에 아이콘이 생긴다.</li>
+        </ol>
+      </details>
+      <details class="os" id="osAnd">
+        <summary>🤖 안드로이드 (Chrome) <span class="tag" hidden>내 기기</span></summary>
+        <ol>
+          <li>Chrome으로 이 사이트를 연다. (Claude 앱 안이 아니라 Chrome이어야 한다.)</li>
+          <li>오른쪽 위 <b>점 세 개(⋮)</b>를 누른다.</li>
+          <li><b>"홈 화면에 추가"</b>를 누른다. ("앱 설치"가 보이면 그걸 눌러도 된다.)</li>
+          <li>이름을 확인하고 <b>"추가"</b>를 누르면 홈 화면에 아이콘이 생긴다.</li>
+        </ol>
+      </details>
+      <details class="os" id="osPc">
+        <summary>💻 컴퓨터 (Chrome·Edge) <span class="tag" hidden>내 기기</span></summary>
+        <ol>
+          <li>이 사이트를 열고 <b>Ctrl + D</b>(맥은 ⌘ + D)로 북마크에 추가한다. 북마크 바에 두면 한 번에 들어온다.</li>
+          <li>바탕화면 아이콘이 필요하면 오른쪽 위 <b>점 세 개(⋮) → 저장 및 공유 → 바로가기 만들기</b>를 누른다.</li>
+        </ol>
+      </details>
+      <p class="gnote">지금 이 사이트는 <b>claude.ai에 로그인한 상태</b>에서만 열리고, 주인이 공유를 허용한 사람만 들어올 수 있다. 홈 화면 아이콘도 이 주소로 가는 바로가기라서 로그인이 풀려 있으면 로그인 화면이 먼저 뜬다. 정식 주소로 공개하면 로그인 없이 앱처럼 설치할 수 있게 바꿀 예정이다.</p>
+
+      <h4>📤 친구에게 공유하기</h4>
+      <ol>
+        <li>아래 <b>"링크 복사"</b>를 눌러 주소를 복사해서 메신저나 SNS에 붙여넣는다.</li>
+        <li>받는 사람이 claude.ai에 로그인해 있고, 주인이 그 사람에게 공유를 허용해야 열린다. 못 열면 주인에게 공유를 요청하라고 알려줘라.</li>
+        <li>글을 쓰고 투표하고 댓글을 달려면 주인이 <b>기여자(Contributor)</b> 권한으로 공유해야 한다. 읽기만 가능한 권한이면 쓰기는 막힌다.</li>
+        <li>내 결과를 SNS에 올리고 싶으면 판결 화면의 <b>"📷 카드 만들기"</b>로 이미지를 저장해서 올린다. 올리기 전에 실명·회사명이 들어갔는지 꼭 확인해라.</li>
+      </ol>
+      <div class="gurl"><code id="siteUrl"></code><button class="btn ghost" id="copyUrl" type="button" style="color:var(--paper)">링크 복사</button><button class="btn ghost" id="shareUrl" type="button" hidden style="color:var(--paper)">📤 공유</button></div>
+    </div>
+  </details>
 
   <footer>재미로 만든 가상의 고해실입니다. 욕설은 전부 연출이며, 실제 누군가를 향한 말이 아닙니다.</footer>
 </div>
@@ -1985,6 +2044,28 @@
   }
   window.addEventListener('hashchange', fromHash);
   fromHash();
+})();
+</script>
+<script>
+(function () {
+  var SITE_URL = 'https://claude.ai/artifact/LnckJNArfz8M9bbWxe68EK';
+  var $ = function (id) { return document.getElementById(id); };
+  function toast(m) { if (window.__app && window.__app.toast) window.__app.toast(m); }
+  $('siteUrl').textContent = SITE_URL;
+  var ua = navigator.userAgent || '', mine = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) ? 'osIos' : /Android/i.test(ua) ? 'osAnd' : 'osPc';
+  var box = $(mine); box.open = true; var tag = box.querySelector('.tag'); if (tag) tag.hidden = false;
+  $('copyUrl').addEventListener('click', function () {
+    var ok = function () { toast('링크를 복사했다. 붙여넣어서 보내라'); };
+    var fail = function () {
+      try { var r = document.createRange(); r.selectNodeContents($('siteUrl')); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {}
+      toast('복사가 안 된다. 선택된 주소를 길게 눌러 복사해라');
+    };
+    try { navigator.clipboard.writeText(SITE_URL).then(ok, fail); } catch (e) { fail(); }
+  });
+  if (navigator.share) {
+    $('shareUrl').hidden = false;
+    $('shareUrl').addEventListener('click', function () { try { navigator.share({ title: '고해실', url: SITE_URL }).catch(function () {}); } catch (e) { toast('공유를 열지 못했다. 링크 복사를 써라'); } });
+  }
 })();
 </script>
 </body>
