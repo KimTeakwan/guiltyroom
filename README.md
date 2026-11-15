@@ -14,6 +14,10 @@ supabase/schema.sql 테이블·잠금(RLS)·서버 규칙 함수
 supabase/tests/     로컬 Postgres로 규칙을 검증한 SQL
 ```
 
+## 현재 상태
+- Supabase 프로젝트 `gohaesil`(리전 Singapore) 생성, `schema.sql` 적용, 익명 로그인 켬, `config.js` 에 URL과 publishable 키 입력까지 끝났다.
+- 아직 남은 것: 관리자 계정(2번), Cloudflare Pages 배포(4번), `privacy.html` 연락처(5번).
+
 ## 배포 순서 (한 번만)
 
 ### 1. Supabase 프로젝트
