@@ -4,5 +4,5 @@
 window.GR_CONFIG = {
   SUPABASE_URL: 'https://lijnjgulushmzfizcqoh.supabase.co',
   SUPABASE_ANON_KEY: 'sb_publishable_nePkN1BQ6eL7YsqksLNsNw_JxjVkI8p',
-  SITE_URL: ''   // 정식 주소(예: https://gohae.pages.dev). 비워두면 현재 주소를 쓴다.
+  SITE_URL: 'https://guiltyroom.pages.dev',   // 정식 주소(예: https://gohae.pages.dev). 비워두면 현재 주소를 쓴다.
 };
